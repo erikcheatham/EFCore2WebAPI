@@ -16,7 +16,7 @@ namespace EFCore2WebAPIWebAPI.Controllers
     {
         // GET api/values
         [HttpGet]
-        public Post Get()
+        public async Task<Post> Get()
         {
             //return new string[] { "value1", "value2" };
             Post value = new Post { Title = "New HTTP POST" };
@@ -24,29 +24,29 @@ namespace EFCore2WebAPIWebAPI.Controllers
             using (var context = new MyContext())
             {
                 //return LoadPosts(context);
-                //AddPost(context);
+                //await AddPost(context);
 
                 //Add Post To Context
-                AddPostFromValue(context, value);
+                await AddPostFromValueAsync(context, value);
 
                 //Update Post In Context
-                //UpdatePostFromValue(context, value.PostId);
+                //await UpdatePostFromValue(context, value.PostId);
             }
 
             List<Post> ret = new List<Post>();
 
             using (var context = new MyContext())
             {
-                ret = LoadPosts(context);
-                //return Json(ret);
+                ret = await LoadPostsAsync(context);
+                //return await Json(ret);
 
                 Post newValue = ret.Where(x => x.Title == value.Title).FirstOrDefault();
 
                 //Update Post Out Of Context With Post Object
-                UpdatePostFromValue(context, newValue);
+                await UpdatePostFromValueAsync(context, newValue);
                 
                 //Post Updating Tags
-                ret = LoadPosts(context);
+                ret = await LoadPostsAsync(context);
 
                 value = ret.Where(x => x.Title == value.Title).FirstOrDefault();
             }
@@ -61,68 +61,70 @@ namespace EFCore2WebAPIWebAPI.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public Post Get(int id)
+        public async Task<Post> Get(int id)
         {
             using (var context = new MyContext())
             {
-                return LoadPost(context, id);
+                return await LoadPostAsync(context, id);
             }
         }
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]Post value)
+        public async Task Post([FromBody]Post value)
         {
             using (var context = new MyContext())
             {
-                AddPostFromValue(context, value);
+                await AddPostFromValueAsync(context, value);
             }
         }
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody]Post value)
+        public async Task Put(int id, [FromBody]Post value)
         {
+            await Task.FromResult(false);
         }
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
+            await Task.FromResult(false);
         }
 
-        private List<Post> LoadPosts(MyContext context)
+        private async Task<List<Post>> LoadPostsAsync(MyContext context)
         {
-            var posts = context.Posts
+            var posts = await context.Posts
                 .Include("PostTags.Tag")
-                .ToList();
+                .ToListAsync();
 
             return posts;
         }
 
-        private Post LoadPost(MyContext context, int id)
+        private async Task<Post> LoadPostAsync(MyContext context, int id)
         {
-            var posts = context.Posts
+            var posts = await context.Posts
                 .Include("PostTags.Tag")
-                .ToList();
+                .ToListAsync();
 
             Post ret = posts.Where(x => x.PostId == id).FirstOrDefault();
 
             return ret;
         }
 
-        private void AddPost(MyContext context)
+        private async Task AddPostAsync(MyContext context)
         {
-            var posts = LoadPosts(context);
+            var posts = await LoadPostsAsync(context);
 
             posts.Add(context.Add(new Post { Title = "New HTTP POST" }).Entity);
 
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
-        private void AddPostFromValue(MyContext context, Post value)
+        private async Task AddPostFromValueAsync(MyContext context, Post value)
         {
-            var posts = LoadPosts(context);
+            var posts = await LoadPostsAsync(context);
 
             var tags = new[]
                 {
@@ -139,12 +141,12 @@ namespace EFCore2WebAPIWebAPI.Controllers
 
             posts.Add(context.Add(value).Entity);
 
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
-        private void UpdatePostFromValue(MyContext context, Post value)
+        private async Task UpdatePostFromValueAsync(MyContext context, Post value)
         {
-            var posts = LoadPosts(context);
+            List<Post> posts = await LoadPostsAsync(context);
 
             //posts.Add(context.Add(value).Entity);
 
@@ -185,7 +187,7 @@ namespace EFCore2WebAPIWebAPI.Controllers
             //}
             #endregion
 
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 }
